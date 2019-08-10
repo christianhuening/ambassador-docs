@@ -1,6 +1,6 @@
 # Linkerd2 Integration
 
-[Linkerd2](https://www.linkerd.io) is a zero-config and ultra-fast service mesh. Ambassador natively supports Linkerd2 for service discovery and end-to-end TLS (including mTLS between services). This capability is particularly useful when deploying Ambassador in so-called hybrid clouds, where applications are deployed on bare metal, VMs, and Kubernetes. In this environment, Ambassador can securely route over TLS to any application regardless of where it is deployed.
+[Linkerd2](https://www.linkerd.io) is a zero-config and ultra-lightweight service mesh. Ambassador natively supports Linkerd2 for service discovery and end-to-end TLS (including mTLS between services).
 
 ## Architecture Overview
 
@@ -12,11 +12,9 @@ In this architecture, Linkerd2
 
 In this guide, you will use Linkerd2 Auto-Inject to mesh a service and use Ambassador to dynamically route requests to that service based on Linkerd2's service discovery data. If you already have Ambassador installed, you will just need to install Linkerd2 and deploy your service.
 
-1. Install and configure Linkerd2 ([instructions](https://www.Linkerd2.io/docs/platform/k8s/index.html)). Linkerd2 can be deployed anywhere in your data center.
+1. Install and configure Linkerd2 ([instructions](https://linkerd.io/2/getting-started/)). Follow the guide until Step 3. That should give you the CLI on your machine and all required pre-flight checks. Starting with step 3
 
-   **Note**
-   - If you are using the [Linkerd2 Helm Chart](https://www.Linkerd2.io/docs/platform/k8s/helm.html) for installation, you must install the latest version of both the [Chart](https://github.com/hashicorp/Linkerd2-helm) and the Linkerd2 binary itself (configurable via the [`values.yaml`](https://www.Linkerd2.io/docs/platform/k8s/helm.html#configuration-values-) file). `git checkout` the most recent tag in the [Linkerd2-helm](https://github.com/hashicorp/Linkerd2-helm) repository to get the latest version of the Linkerd2 Helm chart.
-   - If you would like to enable end-to-end TLS between all of your APIs in Kubernetes, you will need to set `connectInject.enabled: true` and `client.grpc: true` in the values.yaml file.
+
 
 2. Deploy Ambassador. Note: If this is your first time deploying Ambassador, reviewing the [Ambassador quick start](/user-guide/getting-started) is strongly recommended.
 
@@ -26,7 +24,7 @@ In this guide, you will use Linkerd2 Auto-Inject to mesh a service and use Ambas
 
    If you're on GKE, or haven't previously created the Ambassador service, please see the Quick Start.
 
-3. Configure Ambassador to look for services registered to Linkerd2 by creating the `Linkerd2Resolver`:
+3. Configure Ambassador to add Linkerd2 Headers to requests. :
 
     ```yaml
     ---
@@ -38,10 +36,10 @@ In this guide, you will use Linkerd2 Auto-Inject to mesh a service and use Ambas
         getambassador.io/config: |
           ---
           apiVersion: ambassador/v1
-          kind: Linkerd2Resolver
-          name: Linkerd2-dc1
-          address: Linkerd2-server.default.svc.cluster.local:8500
-          datacenter: dc1
+          kind: Module
+          name: ambassador
+          config:
+            add_linkerd_headers: true
     spec:
       type: LoadBalancer
       selector:
@@ -51,7 +49,7 @@ In this guide, you will use Linkerd2 Auto-Inject to mesh a service and use Ambas
         targetPort: 8080
     ```
 
-    This will tell Ambassador that Linkerd2 is a service discovery endpoint. Save the configuration to a file (e.g., `ambassador-service.yaml`, and apply this configuration with `kubectl apply -f ambassador-service.yaml`. For more information about resolver configuration, see the [resolver reference documentation](/reference/core/resolvers). (If you're using Linkerd2 deployed elsewhere in your data center, make sure the `address` points to your Linkerd2 FQDN or IP address).
+    This will tell Ambassador to add additional headers to each request forwarded to Linkerd2 with information about where to route this request to. This is a general setting. If you rather prefer to set this per Route Mapping, that is also an option, but requires your
 
 ## Routing to Linkerd2 Services
 
