@@ -2,19 +2,34 @@
 
 [Linkerd2](https://www.linkerd.io) is a zero-config and ultra-lightweight service mesh. Ambassador natively supports Linkerd2 for service discovery and end-to-end TLS (including mTLS between services).
 
-## Architecture Overview
+## Architecture
 
-In this architecture, Linkerd2
+Linkerd2 is designed for simplicity, security and performance. In the cluster it runs a control plane in its own namespace and then injects sidecar proxy containers in every Pod that should be meshed. mTLS between services is automatically handled by the control plane and the proxies.
 
-![ambassador-Linkerd2](/doc-images/Linkerd2-ambassador.png)
+Ambassador itself also needs to be meshed and then configured to add special linkerd headers to requests so as to tell Linkerd2 where to forward them.
+
+Through that setup, Ambassador terminates external TLS as the gateway and traffic is then immediately wrapped into mTLS by Linkerd2 again. Thus we have a full end-to-end TLS encryption chain.
 
 ## Getting started
 
 In this guide, you will use Linkerd2 Auto-Inject to mesh a service and use Ambassador to dynamically route requests to that service based on Linkerd2's service discovery data. If you already have Ambassador installed, you will just need to install Linkerd2 and deploy your service.
 
-1. Install and configure Linkerd2 ([instructions](https://linkerd.io/2/getting-started/)). Follow the guide until Step 3. That should give you the CLI on your machine and all required pre-flight checks. Starting with step 3
+Setting up Linkerd2 requires to install three components. The first is the CLI on your local machine, the second is the actual Linkerd2 control plane in your Kubernetes Cluster. Finally you have to inject your services' Pods with Linkerd Sidecars to mesh them.
 
+1. Install and configure Linkerd2 ([instructions](https://linkerd.io/2/getting-started/)). Follow the guide until Step 3. That should give you the CLI on your machine and all required pre-flight checks.
 
+In a nutshell these steps boil down to the following:
+
+```bash
+# install linkerd cli tool
+curl -sL https://run.linkerd.io/install | sh
+# add linkerd to your path
+export PATH=$PATH:$HOME/.linkerd2/bin
+# verify installation
+linkerd version
+```
+
+2. Now it is time to
 
 2. Deploy Ambassador. Note: If this is your first time deploying Ambassador, reviewing the [Ambassador quick start](/user-guide/getting-started) is strongly recommended.
 
